@@ -1,0 +1,8 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 60rem; margin: 0 auto; padding: 3rem 1.5rem; }
