@@ -1,0 +1,54 @@
+name: CI main
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  HUSKY: '0'
+
+concurrency:
+  group: ci-main-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Compilar Astro
+    if: github.ref == 'refs/heads/main' || github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+
+  docker:
+    name: Construir y probar Docker
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Construir imagen
+        run: docker build --tag trafkintu-kimun:ci .
+      - name: Iniciar contenedor
+        run: docker run --detach --name trafkintu-ci --publish 127.0.0.1:8080:8080 trafkintu-kimun:ci
+      - name: Comprobar respuesta HTTP
+        run: curl --fail --silent --show-error --retry 15 --retry-connrefused --retry-delay 2 --max-time 5 http://127.0.0.1:8080/
+      - name: Mostrar logs ante un error
+        if: failure()
+        run: docker logs trafkintu-ci || true
+      - name: Limpiar contenedor
+        if: always()
+        run: docker rm --force trafkintu-ci || true
