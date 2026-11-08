@@ -1,0 +1,10 @@
+.branches/
+.temp/
+backups/
+.env
+.env.*
+!.env.example
+.secrets/
+.credentials/
+signing_keys.json
+.env.keys

@@ -1,0 +1,1 @@
+-- No incluir datos personales reales ni credenciales.

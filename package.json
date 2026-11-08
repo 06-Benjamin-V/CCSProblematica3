@@ -11,13 +11,16 @@
     "check": "astro check",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "supabase": "supabase"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.119.0",
     "astro": "^7.4.7"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.12",
+    "supabase": "3.0.0",
     "typescript": "6.0.3"
   }
 }
