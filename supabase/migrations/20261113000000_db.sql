@@ -448,3 +448,62 @@ CREATE POLICY "Usuarios activos gestionan territorio_especie"
   TO authenticated
   USING (public.es_usuario_activo())
   WITH CHECK (public.es_usuario_activo());
+
+-- =====================================================
+-- Almacenamiento: Bucket de Supabase Storage y RLS
+-- =====================================================
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'multimedia',
+  'multimedia',
+  true,
+  52428800, -- 50 MiB (coincide con config.toml)
+  ARRAY[
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml',
+    'audio/mpeg', 'audio/ogg', 'audio/wav', 'audio/mp4', 'audio/webm',
+    'video/mp4', 'video/webm', 'video/quicktime',
+    'application/pdf'
+  ]
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+-- Políticas de seguridad para storage.objects
+DROP POLICY IF EXISTS "Lectura pública de archivos multimedia" ON storage.objects;
+CREATE POLICY "Lectura pública de archivos multimedia"
+  ON storage.objects FOR SELECT
+  TO anon, authenticated
+  USING (bucket_id = 'multimedia');
+
+DROP POLICY IF EXISTS "Usuarios activos suben archivos a multimedia" ON storage.objects;
+CREATE POLICY "Usuarios activos suben archivos a multimedia"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    bucket_id = 'multimedia'
+    AND public.es_usuario_activo()
+  );
+
+DROP POLICY IF EXISTS "Usuarios activos actualizan archivos de multimedia" ON storage.objects;
+CREATE POLICY "Usuarios activos actualizan archivos de multimedia"
+  ON storage.objects FOR UPDATE
+  TO authenticated
+  USING (
+    bucket_id = 'multimedia'
+    AND public.es_usuario_activo()
+  )
+  WITH CHECK (
+    bucket_id = 'multimedia'
+    AND public.es_usuario_activo()
+  );
+
+DROP POLICY IF EXISTS "Usuarios activos eliminan archivos de multimedia" ON storage.objects;
+CREATE POLICY "Usuarios activos eliminan archivos de multimedia"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (
+    bucket_id = 'multimedia'
+    AND public.es_usuario_activo()
+  );
